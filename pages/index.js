@@ -1,65 +1,104 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import React, { useState, useEffect } from 'react'
+import SideMenu from '../components/side-menu'
+import Carrousel from '../components/carrousel'
+import MovieList from '../components/movie-list'
+import { getCategories, getMovies } from '../actions/index'
 
-export default function Home() {
-  return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+class Home extends React.Component {
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
+  constructor(props) {
+    super(props)
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+    this.state = {
+      filter: 'all'
+    }
+  }
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+  static async getInitialProps() {
+    const movies = await getMovies()
+    const images = movies.map((movie) => {
+      return {
+        id: `image-${movie.id}`,
+        url: movie.cover,
+        title: movie.name
+      }
+    })
 
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
+    const categories = await getCategories()
+    return {
+      movies, images, categories
+    }
+  }
 
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+  changeCategory = (category) => {
+    this.setState({ filter: category })
+  }
+
+  filterMovies = (movies) => {
+
+    const { filter } = this.state
+    console.log(`filtering ${filter}`)
+
+    if (filter === 'all') {
+      return movies
+    }
+
+    // return movies.filter((movie) => {
+    //   return movie.genre && movie.genre.includes(filter)
+    // })
+    console.log(movies[1].genre)
+    let filteredMovie = movies.filter((movie) => { return movie.genre.includes(filter) && movie.genre })
+    console.log(filteredMovie)
+
+    return filteredMovie
+  }
+
+
+  render() {
+    const { movies, images, categories } = this.props
+    const { filter } = this.state
+    // console.log(JSON.stringify(images))
+
+    return (
+      <div className="">
+        {/* <div className="home-page"> */}
+
+        <div className="row">
+          <div className="col-lg-3">
+            <SideMenu
+              categories={categories}
+              changeCategory={this.changeCategory}
+              activeCategory={filter} />
+          </div>
+
+          <div className="col-lg-9">
+            <Carrousel images={images} />
+
+            <div className="row">
+
+              <h2> {`${filter} Movies`} </h2>
+              {/* {errorMessage &&
+                  <div className="alert alert-danger" role="alert">
+                    {errorMessage}
+                  </div>
+                } */}
+              <MovieList movies={this.filterMovies(movies) || []} />
+            </div>
+          </div>
         </div>
-      </main>
+        {/* </div> */}
 
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
-  )
+
+        {/* <style jsx>{`
+        .home-page {
+          padding-top: 100px;
+        }
+        `}</style> */}
+      </div>
+    )
+  }
+
 }
+
+export default Home
